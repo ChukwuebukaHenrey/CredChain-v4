@@ -38,10 +38,13 @@ export default function PublicProfile() {
   const [isVerifier] = useState(() => localStorage.getItem("credchain_role") === "verifier");
   const [saved, setSaved] = useState(false);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  const [highlightedCredId, setHighlightedCredId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (candidateId === "demo-candidate" || candidateId.toLowerCase().includes("emeka")) {
-      setProfile({
+    const query = decodeURIComponent(candidateId).trim().toLowerCase();
+
+    const staticProfiles: CandidateProfile[] = [
+      {
         id: "demo-candidate",
         name: "Emeka Obi",
         photo:
@@ -59,9 +62,8 @@ export default function PublicProfile() {
             network: "Solana Mainnet",
           },
         ],
-      });
-    } else if (candidateId === "cand-102" || candidateId.toLowerCase().includes("ada")) {
-      setProfile({
+      },
+      {
         id: "cand-102",
         name: "Ada Nwosu",
         photo:
@@ -78,9 +80,8 @@ export default function PublicProfile() {
             network: "Solana Mainnet",
           },
         ],
-      });
-    } else if (candidateId === "cand-103" || candidateId.toLowerCase().includes("alex")) {
-      setProfile({
+      },
+      {
         id: "cand-103",
         name: "Alex Chen",
         photo:
@@ -107,7 +108,54 @@ export default function PublicProfile() {
             network: "Solana Mainnet",
           },
         ],
+      },
+    ];
+
+    console.log("=== CredChain Search Tracing Step-by-Step ===");
+    console.log("1. Input value being searched (query):", JSON.stringify(query));
+    console.log("2. Type of query:", typeof query);
+    console.log("3. Dataset of profiles being searched against:", staticProfiles);
+
+    let matchedCredId: string | null = null;
+    const matched = staticProfiles.find((p) => {
+      const matchId = String(p.id).toLowerCase() === query;
+      const matchName = String(p.name).toLowerCase().includes(query);
+      
+      const matchedC = p.credentials.find((c) => {
+        // Ensure string conversions for type safety and exact comparisons
+        const idStr = String(c.id).toLowerCase();
+        const verIdStr = String(c.verificationId || "").toLowerCase();
+        const txHashStr = String(c.txHash || "").toLowerCase();
+        
+        const matchIdVal = idStr === query;
+        const matchVerId = verIdStr === query;
+        const matchTxHash = txHashStr === query;
+        const matchVerIdClean = verIdStr.replace(/[-\s]/g, "") === query.replace(/[-\s]/g, "");
+        const matchTxHashInc = txHashStr.includes(query);
+        
+        console.log(`- Comparing credential [${c.title}] | ID keys: id=${idStr} vs query=${query} (${matchIdVal}), verificationId=${verIdStr} vs query=${query} (${matchVerId} / ${matchVerIdClean}), txHash=${txHashStr} vs query=${query} (${matchTxHash} / ${matchTxHashInc})`);
+        
+        return matchIdVal || matchVerId || matchTxHash || matchVerIdClean || matchTxHashInc;
       });
+
+      console.log(`- Candidate Profile comparison: name=${p.name}, matchId=${matchId}, matchName=${matchName}, hasMatchedCred=${!!matchedC}`);
+      
+      if (matchedC) {
+        matchedCredId = matchedC.id;
+      }
+      return matchId || matchName || !!matchedC;
+    });
+
+    console.log("4. Final matched result profile:", matched ? matched.name : "NONE (Generating dynamic profile)");
+    if (matchedCredId) {
+      console.log("5. Visual highlight matched credential ID:", matchedCredId);
+    }
+    console.log("=========================================");
+
+    setHighlightedCredId(matchedCredId);
+
+    if (matched) {
+      setProfile(matched);
     } else {
       const formattedName = decodeURIComponent(candidateId)
         .replace(/[-_]/g, " ")
@@ -225,12 +273,24 @@ export default function PublicProfile() {
             </div>
 
             <div className="flex flex-col gap-3">
-              {profile.credentials.map((cred) => (
-                <article
-                  key={cred.id}
-                  className="bg-bg-sunken border border-border-main border-l-2 border-l-hash-green rounded-md p-5 flex flex-col gap-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              {profile.credentials.map((cred) => {
+                const isHighlighted = cred.id === highlightedCredId;
+                return (
+                  <article
+                    key={cred.id}
+                    className={`bg-bg-sunken border border-l-2 border-l-hash-green rounded-md p-5 flex flex-col gap-4 transition-all duration-500 ${
+                      isHighlighted
+                        ? "border-brand-purple ring-2 ring-brand-purple/20 scale-[1.01] shadow-lg shadow-brand-purple/5"
+                        : "border-border-main"
+                    }`}
+                  >
+                    {isHighlighted && (
+                      <div className="bg-brand-purple/10 border border-brand-purple/20 text-brand-purple text-[10px] font-mono font-bold px-2.5 py-1 rounded-sm flex items-center justify-between">
+                        <span>⚡ SEARCH MATCH: Direct ledger cryptographic hit</span>
+                        <span className="uppercase tracking-widest text-[9px] opacity-80">Verified</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border border-border-main bg-bg-surface text-role-candidate text-[11px] font-mono mb-2">
                         <Hash className="w-3 h-3 shrink-0" />
@@ -299,8 +359,9 @@ export default function PublicProfile() {
                     </div>
                   </div>
                 </article>
-              ))}
-            </div>
+              );
+            })}
+          </div>
           </section>
 
           {/* Verifier-only save */}

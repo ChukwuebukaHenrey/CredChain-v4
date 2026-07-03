@@ -70,7 +70,8 @@ export default function AuthLeftPanel({ role, currentStep, totalSteps }: AuthLef
         src={authSidebarImg}
         alt=""
         aria-hidden
-        className="absolute inset-0 w-full h-full object-cover opacity-[0.12] pointer-events-none mix-blend-luminosity"
+        style={{ opacity: "var(--auth-sidebar-opacity)" }}
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none mix-blend-luminosity"
       />
 
       {/* Top: Logo */}

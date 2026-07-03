@@ -39,8 +39,40 @@ export default function IssuerDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
 
+  const [issuerUser, setIssuerUser] = useState<{
+    name: string;
+    subtitle: string;
+    initials: string;
+    photo?: string | null;
+  }>({
+    name: "FUTO Registrar",
+    subtitle: "Whitelisted Issuer · futo.ng",
+    initials: "FU",
+    photo: localStorage.getItem("credchain_profile_photo")
+  });
+
   useEffect(() => {
     localStorage.setItem("credchain_role", "issuer");
+    const storedUserStr = localStorage.getItem("cc_user");
+    if (storedUserStr) {
+      try {
+        const storedUser = JSON.parse(storedUserStr);
+        if (storedUser.role === "issuer") {
+          const name = storedUser.fullName || storedUser.instName || storedUser.name || "FUTO Registrar";
+          const email = storedUser.email || storedUser.contactEmail || "registrar@futo.ng";
+          const domain = email.split("@")[1] || "futo.ng";
+          const initials = name.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() || "").join("");
+          setIssuerUser({
+            name,
+            subtitle: `Whitelisted Issuer · ${domain}`,
+            initials: initials || "FU",
+            photo: storedUser.photo || localStorage.getItem("credchain_profile_photo")
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   const [issuedHistory] = useState([
@@ -135,13 +167,22 @@ export default function IssuerDashboard() {
       (filterTab === "all" || r.status === filterTab) &&
       (searchQuery === "" ||
         r.candidate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.matric.includes(searchQuery))
+        r.matric.includes(searchQuery) ||
+        r.credential.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const filteredHistory = issuedHistory.filter(
+    (item) =>
+      searchQuery === "" ||
+      item.candidate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.credential.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.txHash.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <DashboardShell
       role="issuer"
-      user={{ name: "FUTO Registrar", subtitle: "Whitelisted Issuer · futo.ng", initials: "FU" }}
+      user={issuerUser}
       navGroups={navGroups}
       activeTab={activeTab}
       onTabChange={(id) => setActiveTab(id as Tab)}
@@ -368,19 +409,27 @@ export default function IssuerDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {issuedHistory.map((item) => (
-                    <tr key={item.id} className="hover:bg-bg-elevated/40 transition-colors">
-                      <td className="p-4 pl-5 font-semibold text-txt-primary">{item.candidate}</td>
-                      <td className="p-4 text-txt-secondary">{item.credential}</td>
-                      <td className="p-4 font-mono text-txt-muted">{item.date}</td>
-                      <td className="p-4 font-mono text-role-issuer break-all">{item.txHash}</td>
-                      <td className="p-4 text-right pr-5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-semibold px-2 py-1 rounded-sm border border-hash-green/30 text-hash-green">
-                          <Check className="w-3 h-3" strokeWidth={2.5} /> VERIFIED
-                        </span>
+                  {filteredHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-txt-muted font-mono text-xs">
+                        // No matching history records found
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredHistory.map((item) => (
+                      <tr key={item.id} className="hover:bg-bg-elevated/40 transition-colors">
+                        <td className="p-4 pl-5 font-semibold text-txt-primary">{item.candidate}</td>
+                        <td className="p-4 text-txt-secondary">{item.credential}</td>
+                        <td className="p-4 font-mono text-txt-muted">{item.date}</td>
+                        <td className="p-4 font-mono text-role-issuer break-all">{item.txHash}</td>
+                        <td className="p-4 text-right pr-5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase font-semibold px-2 py-1 rounded-sm border border-hash-green/30 text-hash-green">
+                            <Check className="w-3 h-3" strokeWidth={2.5} /> VERIFIED
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

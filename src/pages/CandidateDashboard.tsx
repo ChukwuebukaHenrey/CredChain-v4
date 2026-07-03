@@ -36,7 +36,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import DashboardShell, { NavGroup } from "../components/DashboardShell";
-import { getCandidate, getNotifications, getQRCode, buildResume } from "../services/api";
+import { getCandidate, getNotifications, getQRCode, buildResume, getWhitelistedInstitutions } from "../services/api";
 import { getTheme, toggleTheme, Theme } from "../services/theme";
 
 type TabType =
@@ -73,12 +73,14 @@ export default function CandidateDashboard() {
   const [credFilter, setCredFilter] = useState<"all" | "verified" | "pending" | "rejected">("all");
 
   // Request credential
-  const [reqInst, setReqInst] = useState("futo");
+  const [reqInst, setReqInst] = useState("Federal University of Technology Owerri (FUTO)");
   const [reqType, setReqType] = useState("Transcript / Degree");
   const [reqMatric, setReqMatric] = useState("");
   const [reqProgram, setReqProgram] = useState("");
   const [reqGradYear, setReqGradYear] = useState("");
   const [reqSuccess, setReqSuccess] = useState(false);
+  const [whitelistedInstitutions, setWhitelistedInstitutions] = useState<string[]>([]);
+  const [institutionSearch, setInstitutionSearch] = useState("");
 
   // AI Resume
   const [resumePrompt, setResumePrompt] = useState(
@@ -152,8 +154,24 @@ export default function CandidateDashboard() {
 
       setCandidate(cand);
       setPortfolioName(cand?.name || "Emeka Obi");
+      if (cand) {
+        setPortfolioHeadline(`${cand.field || "Computer Engineering"} student · ${cand.institution || "FUTO"}`);
+        if (cand.skills && cand.skills.length > 0) {
+          setPortfolioSkills(cand.skills);
+        }
+        if (cand.bio) {
+          setPortfolioBio(cand.bio);
+        }
+      }
       setNotifications(notifs || []);
       setQrUrl(qr?.qr_image_url || `https://api.qrserver.com/v1/create-qr-code/?data=https://credchain.io/verify/demo-candidate&size=200x200`);
+
+      try {
+        const insts = await getWhitelistedInstitutions();
+        setWhitelistedInstitutions(insts);
+      } catch (err) {
+        console.error("Failed to load whitelisted institutions", err);
+      }
     }
     loadContext();
   }, []);
@@ -210,15 +228,22 @@ export default function CandidateDashboard() {
   };
 
   const sampleCreds: Credential[] = [
-    { id: "cred-1", title: "B.Eng. Software Engineering", issuer: "Federal University of Technology, Owerri", status: "verified", hash: "0x7f3a9b2c4d1e", date: "May 2026" },
+    { id: "cred-1", title: `B.Eng. ${candidate?.field || "Software Engineering"}`, issuer: candidate?.institution || "Federal University of Technology, Owerri", status: "verified", hash: "0x7f3a9b2c4d1e", date: `May ${candidate?.graduationYear || 2026}` },
     { id: "cred-2", title: "Microsoft AI-900 Certification", issuer: "Microsoft · DSN Elevate", status: "verified", hash: "0x2c8f1a7e3b0d", date: "Mar 2026" },
     { id: "cred-3", title: "Hackathon — 2nd Place Finalist", issuer: "TRI AI Saturdays · June 2026", status: "verified", hash: "0x9a1d4c7f2e8b", date: "Jun 2026" },
     { id: "cred-4", title: "Internship Letter — Frontend Dev", issuer: "Accenture Nigeria · 2025", status: "pending", hash: "Awaiting institution signature", date: "Nov 2025" },
-    { id: "cred-5", title: "100 Level Academic Transcript", issuer: "Federal University of Technology, Owerri", status: "verified", hash: "0x5e2b0f9c3d7a", date: "Feb 2026" },
+    { id: "cred-5", title: "100 Level Academic Transcript", issuer: candidate?.institution || "Federal University of Technology, Owerri", status: "verified", hash: "0x5e2b0f9c3d7a", date: "Feb 2026" },
     { id: "cred-6", title: "NYSC Discharge Certificate", issuer: "National Youth Service Corps", status: "rejected", hash: "Verification declined", date: "Jan 2026", reason: "Matric/service number did not exactly match official institution records." },
   ];
 
-  const filteredCreds = sampleCreds.filter((c) => credFilter === "all" || c.status === credFilter);
+  const filteredCreds = sampleCreds.filter((c) => {
+    const matchesTab = credFilter === "all" || c.status === credFilter;
+    const matchesSearch = searchQuery === "" ||
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.issuer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.hash && c.hash.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesTab && matchesSearch;
+  });
 
   const sampleActivities = [
     { title: "AI-900 Certification", issuer: "Microsoft", action: "Credential issued", date: "Jun 3, 2026", status: "Verified" },
@@ -226,6 +251,14 @@ export default function CandidateDashboard() {
     { title: "Hackathon Award", issuer: "TRI AI Saturdays", action: "Credential issued", date: "May 28, 2026", status: "Verified" },
     { title: "Resume Generated", issuer: "CredChain AI", action: "AI resume created", date: "May 25, 2026", status: "Done" },
   ];
+
+  const filteredActivities = sampleActivities.filter(
+    (act) =>
+      searchQuery === "" ||
+      act.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      act.issuer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      act.action.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const faqs = [
     { id: 1, q: "Why is my credential request still pending?", a: "Requests move through Requested → In Review → Issued or Rejected. The institution registrar reviews and cryptographically signs each one, which can take 1–3 business days." },
@@ -265,7 +298,12 @@ export default function CandidateDashboard() {
     <>
       <DashboardShell
         role="candidate"
-        user={{ name: portfolioName, subtitle: "Candidate · FUTO", initials: "EO" }}
+        user={{
+          name: portfolioName,
+          subtitle: `Candidate · ${candidate?.institution || "FUTO"}`,
+          initials: portfolioName.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() || "").join("") || "EO",
+          photo: profilePhoto
+        }}
         navGroups={navGroups}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as TabType)}
@@ -414,17 +452,25 @@ export default function CandidateDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
-                    {sampleActivities.map((act, i) => (
-                      <tr key={i} className="hover:bg-bg-elevated/40 transition-colors">
-                        <td className="p-4 pl-5 font-semibold text-txt-primary">{act.title}</td>
-                        <td className="p-4 text-txt-secondary hidden sm:table-cell">{act.issuer}</td>
-                        <td className="p-4 text-txt-secondary">{act.action}</td>
-                        <td className="p-4 font-mono text-txt-muted hidden md:table-cell">{act.date}</td>
-                        <td className="p-4 text-right pr-5">
-                          <StatusPill status={act.status} />
+                    {filteredActivities.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-txt-muted font-mono text-xs">
+                          // No matching activities found
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredActivities.map((act, i) => (
+                        <tr key={i} className="hover:bg-bg-elevated/40 transition-colors">
+                          <td className="p-4 pl-5 font-semibold text-txt-primary">{act.title}</td>
+                          <td className="p-4 text-txt-secondary hidden sm:table-cell">{act.issuer}</td>
+                          <td className="p-4 text-txt-secondary">{act.action}</td>
+                          <td className="p-4 font-mono text-txt-muted hidden md:table-cell">{act.date}</td>
+                          <td className="p-4 text-right pr-5">
+                            <StatusPill status={act.status} />
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -539,39 +585,59 @@ export default function CandidateDashboard() {
                   <span>Choose issuing institution</span>
                 </div>
 
-                <div className="space-y-2">
-                  {[
-                    { id: "futo", name: "Federal University of Technology, Owerri (FUTO)", type: "University · Whitelisted Root" },
-                    { id: "ms", name: "Microsoft (DSN Elevate Bootcamp)", type: "Certifying Body · Whitelisted Root" },
-                    { id: "acc", name: "Accenture Talent Academy Nigeria", type: "Corporate · Whitelisted Root" },
-                  ].map((inst) => (
-                    <button
-                      type="button"
-                      key={inst.id}
-                      onClick={() => setReqInst(inst.id)}
-                      className={`w-full p-3 rounded-md border text-left flex items-center justify-between transition-colors cursor-pointer ${
-                        reqInst === inst.id
-                          ? "bg-role-candidate-soft border-role-candidate"
-                          : "bg-bg-sunken border-border-main hover:border-border-strong"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Building2
-                          className={`w-4 h-4 flex-shrink-0 ${
-                            reqInst === inst.id ? "text-role-candidate" : "text-txt-muted"
-                          }`}
-                          strokeWidth={1.75}
-                        />
-                        <div className="min-w-0">
-                          <div className="text-xs font-semibold text-txt-primary truncate">{inst.name}</div>
-                          <div className="text-[10px] font-mono text-txt-muted truncate">{inst.type}</div>
+                {/* Search Bar */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search whitelisted institutions..."
+                    value={institutionSearch}
+                    onChange={(e) => setInstitutionSearch(e.target.value)}
+                    className="w-full bg-bg-sunken border border-border-main rounded-md px-3 py-2 text-xs text-txt-primary focus:outline-none focus:border-role-candidate font-sans"
+                  />
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {whitelistedInstitutions
+                    .filter((name) =>
+                      name.toLowerCase().includes(institutionSearch.toLowerCase())
+                    )
+                    .map((instName) => (
+                      <button
+                        type="button"
+                        key={instName}
+                        onClick={() => setReqInst(instName)}
+                        className={`w-full p-3 rounded-md border text-left flex items-center justify-between transition-colors cursor-pointer ${
+                          reqInst === instName
+                            ? "bg-role-candidate-soft border-role-candidate"
+                            : "bg-bg-sunken border-border-main hover:border-border-strong"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Building2
+                            className={`w-4 h-4 flex-shrink-0 ${
+                              reqInst === instName ? "text-role-candidate" : "text-txt-muted"
+                            }`}
+                            strokeWidth={1.75}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-txt-primary truncate">{instName}</div>
+                            <div className="text-[10px] font-mono text-txt-muted truncate">
+                              Accredited Institution · Whitelisted Root
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      {reqInst === inst.id && (
-                        <Check className="w-4 h-4 text-role-candidate flex-shrink-0 ml-2" strokeWidth={2.5} />
-                      )}
-                    </button>
-                  ))}
+                        {reqInst === instName && (
+                          <Check className="w-4 h-4 text-role-candidate flex-shrink-0 ml-2" strokeWidth={2.5} />
+                        )}
+                      </button>
+                    ))}
+                  {whitelistedInstitutions.filter((name) =>
+                    name.toLowerCase().includes(institutionSearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-4 text-xs text-txt-muted font-sans">
+                      No matching whitelisted institutions found.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -913,6 +979,17 @@ export default function CandidateDashboard() {
                             const res = ev.target?.result as string;
                             setProfilePhoto(res);
                             localStorage.setItem("credchain_profile_photo", res);
+                            // Also update inside cc_user
+                            try {
+                              const storedUserStr = localStorage.getItem("cc_user");
+                              if (storedUserStr) {
+                                const storedUser = JSON.parse(storedUserStr);
+                                storedUser.photo = res;
+                                localStorage.setItem("cc_user", JSON.stringify(storedUser));
+                              }
+                            } catch (err) {
+                              console.error("Failed to update user photo in localStorage", err);
+                            }
                           };
                           reader.readAsDataURL(file);
                         }
@@ -1082,28 +1159,33 @@ export default function CandidateDashboard() {
 
             <div className="bg-bg-surface border border-border-main rounded-lg p-6 space-y-6 text-center">
               {/* Scope picker */}
-              <div className="inline-flex bg-bg-sunken border border-border-main rounded-md p-1 text-xs max-w-md mx-auto">
-                {(["portfolio", "projects", "credentials"] as const).map((sc) => (
-                  <button
-                    key={sc}
-                    onClick={() => setQrScope(sc)}
-                    className={`flex-1 py-1.5 px-3 rounded-sm capitalize font-medium cursor-pointer transition-colors ${
-                      qrScope === sc
-                        ? "bg-role-candidate-soft text-role-candidate"
-                        : "text-txt-secondary hover:text-txt-primary"
-                    }`}
-                  >
-                    {sc}
-                  </button>
-                ))}
+              <div className="w-full flex justify-center">
+                <div className="inline-flex bg-bg-sunken border border-border-main rounded-md p-1 text-xs max-w-md">
+                  {(["portfolio", "projects", "credentials"] as const).map((sc) => (
+                    <button
+                      key={sc}
+                      onClick={() => setQrScope(sc)}
+                      className={`flex-1 py-1.5 px-3 rounded-sm capitalize font-medium cursor-pointer transition-colors ${
+                        qrScope === sc
+                          ? "bg-role-candidate-soft text-role-candidate"
+                          : "text-txt-secondary hover:text-txt-primary"
+                      }`}
+                    >
+                      {sc}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="bg-white rounded-md inline-block p-6 mx-auto border border-border-main">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?data=https://credchain.io/verify/demo-candidate?scope=${qrScope}&size=220x220`}
-                  alt={`Scoped QR · ${qrScope}`}
-                  className="w-48 h-48 sm:w-56 sm:h-56 mx-auto"
-                />
+              {/* QR Code Container */}
+              <div className="w-full flex justify-center">
+                <div className="bg-white rounded-md p-6 border border-border-main inline-block">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=https://credchain.io/verify/demo-candidate?scope=${qrScope}&size=220x220`}
+                    alt={`Scoped QR · ${qrScope}`}
+                    className="w-48 h-48 sm:w-56 sm:h-56 block mx-auto"
+                  />
+                </div>
               </div>
 
               <div className="max-w-md mx-auto space-y-3">

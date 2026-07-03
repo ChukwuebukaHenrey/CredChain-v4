@@ -22,6 +22,7 @@ export interface ShellUser {
   name: string;
   subtitle?: string;
   initials?: string;
+  photo?: string | null;
 }
 
 interface DashboardShellProps {
@@ -180,9 +181,13 @@ export default function DashboardShell({
         {/* Bottom: User pill + logout */}
         <div className="border-t border-border-subtle p-4 flex items-center gap-3">
           <div
-            className={`w-9 h-9 rounded-md flex items-center justify-center font-mono text-sm font-semibold ${accent.bg} ${accent.text} border border-border-main flex-shrink-0`}
+            className={`w-9 h-9 rounded-md flex items-center justify-center font-mono text-sm font-semibold ${accent.bg} ${accent.text} border border-border-main flex-shrink-0 overflow-hidden relative`}
           >
-            {initials}
+            {user.photo ? (
+              <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-txt-primary truncate">{user.name}</div>

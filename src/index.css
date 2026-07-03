@@ -40,6 +40,9 @@
   /* Status hashes */
   --hash-green: #22C55E;
   --hash-red: #EF4444;
+
+  /* Custom component vars */
+  --auth-sidebar-opacity: 0.12;
 }
 
 [data-theme="light"] {
@@ -66,11 +69,14 @@
   --role-verifier-soft: rgba(180, 83, 9, 0.08);
 
   --txt-primary: #0F0A1A;
-  --txt-secondary: #5E5276;
-  --txt-muted: #8A819B;
+  --txt-secondary: #2C223E;
+  --txt-muted: #564B6B;
 
   --hash-green: #15803D;
   --hash-red: #B91C1C;
+
+  /* Custom component vars */
+  --auth-sidebar-opacity: 0.28;
 }
 
 /* ============================================================

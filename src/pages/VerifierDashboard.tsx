@@ -32,8 +32,39 @@ export default function VerifierDashboard() {
   const [query, setQuery] = useState("");
   const [copiedKey, setCopiedKey] = useState(false);
 
+  const [verifierUser, setVerifierUser] = useState<{
+    name: string;
+    subtitle: string;
+    initials: string;
+    photo?: string | null;
+  }>({
+    name: "Tunde Bello",
+    subtitle: "Paystack · Verifier",
+    initials: "TB",
+    photo: localStorage.getItem("credchain_profile_photo")
+  });
+
   useEffect(() => {
     localStorage.setItem("credchain_role", "verifier");
+    const storedUserStr = localStorage.getItem("cc_user");
+    if (storedUserStr) {
+      try {
+        const storedUser = JSON.parse(storedUserStr);
+        if (storedUser.role === "verifier") {
+          const name = storedUser.fullName || storedUser.name || "Tunde Bello";
+          const comp = storedUser.companyName || storedUser.company || "Paystack";
+          const initials = name.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() || "").join("");
+          setVerifierUser({
+            name,
+            subtitle: `${comp} · Verifier`,
+            initials: initials || "TB",
+            photo: storedUser.photo || localStorage.getItem("credchain_profile_photo")
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   const [savedCandidates] = useState<SavedCandidate[]>([
@@ -47,6 +78,14 @@ export default function VerifierDashboard() {
     { id: "log-2", candidate: "Ada Nwosu", action: "DID Signature Check", status: "valid", time: "2 hours ago", tx: "8vKq...2yRn" },
     { id: "log-3", candidate: "Alex Chen", action: "Solana Account Proof", status: "valid", time: "Yesterday", tx: "3bNz...7wPt" },
   ]);
+
+  const filteredLogs = verificationLogs.filter(
+    (log) =>
+      searchQuery === "" ||
+      log.candidate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.tx.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +136,7 @@ export default function VerifierDashboard() {
   return (
     <DashboardShell
       role="verifier"
-      user={{ name: "Tunde Bello", subtitle: "Paystack · Verifier", initials: "TB" }}
+      user={verifierUser}
       navGroups={navGroups}
       activeTab={activeTab}
       onTabChange={(id) => setActiveTab(id as Tab)}
@@ -173,7 +212,7 @@ export default function VerifierDashboard() {
           </div>
 
           {/* Recent verifications — preview of the logs */}
-          <RecentVerificationsTable logs={verificationLogs.slice(0, 3)} />
+          <RecentVerificationsTable logs={filteredLogs.slice(0, 3)} />
         </div>
       )}
 
@@ -251,7 +290,7 @@ export default function VerifierDashboard() {
               Cryptographic receipts for every check made against the Solana ledger.
             </p>
           </div>
-          <RecentVerificationsTable logs={verificationLogs} />
+          <RecentVerificationsTable logs={filteredLogs} />
         </div>
       )}
 

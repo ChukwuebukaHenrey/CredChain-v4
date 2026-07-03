@@ -108,13 +108,13 @@ export default function Login() {
         <div className="hidden min-[900px]:flex w-[88vw] max-w-[1400px] h-[86vh] max-h-[840px] min-h-[600px] bg-bg-surface border border-border-main rounded-lg overflow-hidden">
           <AuthLeftPanel role={roleParam} />
 
-          <div className="w-[55%] bg-bg-base p-10 lg:p-14 xl:p-16 flex flex-col justify-between text-left relative overflow-y-auto h-full">
+          <div className="w-[55%] bg-bg-base p-8 lg:p-10 xl:p-12 flex flex-col justify-between text-left relative overflow-y-auto h-full">
             <div className="absolute top-6 right-6">
               <ThemeToggle />
             </div>
 
-            <div className="pr-10">
-              <div className="mb-8 space-y-2">
+            <div className="pr-6">
+              <div className="mb-5 space-y-2">
                 <div className="border-l-2 border-brand-purple pl-3 font-mono text-[11px] tracking-[0.18em] text-txt-muted uppercase">
                   SIGN IN
                 </div>
@@ -127,17 +127,17 @@ export default function Login() {
               </div>
 
               {/* One-tap demo block */}
-              <div className="bg-bg-surface border border-border-main rounded-lg p-5 mb-6 space-y-3">
-                <div className="text-[11px] font-mono font-semibold text-txt-muted tracking-wider uppercase mb-2">
+              <div className="bg-bg-surface border border-border-main rounded-lg p-4 mb-4 space-y-2.5">
+                <div className="text-[11px] font-mono font-semibold text-txt-muted tracking-wider uppercase mb-1">
                   // ONE-TAP DEMO AUTH
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {ONE_TAP.map((t) => (
                     <button
                       key={t.role}
                       type="button"
                       onClick={() => handleOneTapAuth(t.route, t.role)}
-                      className={`w-full flex items-center justify-between p-3 bg-bg-sunken border border-border-main ${t.accentBorder} ${t.accentBg} rounded-md cursor-pointer transition-colors group`}
+                      className={`w-full flex items-center justify-between p-2.5 bg-bg-sunken border border-border-main ${t.accentBorder} ${t.accentBg} rounded-md cursor-pointer transition-colors group`}
                     >
                       <div className="flex items-center gap-3 text-sm font-semibold text-txt-primary">
                         <span className={`w-7 h-7 rounded-sm border border-border-main bg-bg-surface flex items-center justify-center ${t.accentText}`}>
@@ -154,7 +154,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 my-6">
+              <div className="flex items-center gap-4 my-4">
                 <div className="flex-1 h-px bg-border-subtle" />
                 <span className="text-[11px] font-mono font-semibold text-txt-muted tracking-wider uppercase">
                   OR MANUAL LOGIN
@@ -162,7 +162,7 @@ export default function Login() {
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
 
-              <form onSubmit={handleSignIn} className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-3">
                 <LabeledInput
                   label="EMAIL ADDRESS"
                   icon={<Mail className="w-4 h-4" />}
@@ -184,7 +184,7 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-md bg-brand-purple hover:bg-brand-purple-dim text-white font-semibold text-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 mt-2"
+                  className="w-full py-2.5 rounded-md bg-brand-purple hover:bg-brand-purple-dim text-white font-semibold text-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 mt-1"
                 >
                   <LogIn className="w-4 h-4" strokeWidth={2} />
                   <span>Sign in</span>
@@ -192,7 +192,7 @@ export default function Login() {
               </form>
             </div>
 
-            <div className="pt-6 text-center text-sm text-txt-secondary mt-8 border-t border-border-subtle font-sans">
+            <div className="pt-4 text-center text-sm text-txt-secondary mt-6 border-t border-border-subtle font-sans">
               Don't have an account?{" "}
               <Link
                 to={roleParam ? `/signup/${roleParam}` : "/role"}
