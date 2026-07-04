@@ -21,39 +21,52 @@ export default function AuthScreen({
   currentStep,
   totalSteps,
   children,
-  backHref = "/role",
-  backLabel = "Back to role selection",
+  backHref = "/",
+  backLabel = "Back to home",
 }: AuthScreenProps) {
   return (
-    <div className="min-h-screen bg-bg-base text-txt-primary flex flex-col p-4 sm:p-6 lg:p-8 relative select-none">
+    <div className="min-h-screen bg-[#07030d] text-txt-primary flex flex-col relative select-none overflow-hidden">
       {/* Mobile top header */}
-      <header className="max-w-7xl w-full mx-auto flex items-center justify-between min-[900px]:hidden">
+      <header className="max-w-7xl w-full mx-auto flex items-center justify-between min-[900px]:hidden p-4">
         <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
           <Logo wordmarkSize="md" />
         </Link>
         <ThemeToggle />
       </header>
 
-      <main className="flex-1 flex items-center justify-center my-6 w-full">
-        {/* Desktop two-panel */}
-        <div className="hidden min-[900px]:flex w-[88vw] max-w-[1400px] h-[86vh] max-h-[840px] min-h-[600px] bg-bg-surface border border-border-main rounded-lg overflow-hidden">
-          <AuthLeftPanel role={role} currentStep={currentStep} totalSteps={totalSteps} />
+      <main className="flex-1 flex w-full h-full min-h-0">
+        {/* Desktop two-panel full viewport layout (No card, edge-to-edge) */}
+        <div className="hidden min-[900px]:flex w-full h-screen bg-bg-base overflow-hidden relative">
+          
+          {/* Top-Right controls (Back to Home + Theme Toggle) of the whole page */}
+          <div className="absolute top-6 right-8 z-25 flex items-center gap-4">
+            <Link
+              to={backHref}
+              className="text-xs font-mono text-txt-muted hover:text-txt-primary transition-colors inline-flex items-center gap-1.5 group"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>{backLabel}</span>
+            </Link>
+            <div className="h-4 w-px bg-border-main" />
+            <ThemeToggle />
+          </div>
 
-          <div className="w-[55%] bg-bg-base p-10 lg:p-14 xl:p-16 flex flex-col text-left relative overflow-y-auto h-full">
-            <div className="absolute top-6 right-6 z-10">
-              <ThemeToggle />
+           <AuthLeftPanel role={role} currentStep={currentStep} totalSteps={totalSteps} />
+
+          <div className="w-[48%] bg-bg-base p-6 lg:p-10 xl:p-12 flex flex-col justify-center text-left relative overflow-y-auto h-full">
+            <div className="w-full max-w-md mx-auto space-y-3 lg:space-y-4">
+              {children}
             </div>
-            {children}
           </div>
         </div>
 
         {/* Mobile single column */}
-        <div className="block min-[900px]:hidden w-full max-w-md bg-bg-surface border border-border-main rounded-lg p-6 sm:p-8">
+        <div className="block min-[900px]:hidden w-full max-w-md bg-bg-surface border border-border-main rounded-2xl p-6 sm:p-8 shadow-xl mx-auto my-auto">
           {children}
         </div>
       </main>
 
-      <footer className="max-w-7xl w-full mx-auto pt-6 border-t border-border-subtle block min-[900px]:hidden">
+      <footer className="max-w-7xl w-full mx-auto pt-6 border-t border-border-subtle block min-[900px]:hidden p-4">
         <Link
           to={backHref}
           className="inline-flex items-center gap-2 text-xs font-mono text-txt-muted hover:text-txt-primary transition-colors"

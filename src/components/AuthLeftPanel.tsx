@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check, ArrowLeft } from "lucide-react";
-import Logo from "./Logo";
+import logoImg from "../assets/logo.png";
 import authSidebarImg from "../assets/images/credchain_auth_sidebar_1782708558420.jpg";
 
 export interface RoleInfo {
@@ -64,75 +64,81 @@ export default function AuthLeftPanel({ role, currentStep, totalSteps }: AuthLef
   const spec = ROLE_SPECS[role] || ROLE_SPECS.candidate;
 
   return (
-    <div className="w-[45%] flex-shrink-0 bg-bg-surface p-10 lg:p-14 xl:p-16 flex flex-col justify-between relative overflow-hidden border-r border-border-main select-none">
-      {/* Background infrastructure image at very low opacity */}
-      <img
-        src={authSidebarImg}
-        alt=""
-        aria-hidden
-        style={{ opacity: "var(--auth-sidebar-opacity)" }}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none mix-blend-luminosity"
-      />
+    <div className="w-[52%] h-full flex flex-col p-4 sm:p-5 lg:p-6 relative select-none bg-transparent">
+      {/* Inner container with rounded corners and overflow hidden, creating the padded image card look */}
+      <div className="w-full h-full rounded-[24px] overflow-hidden relative flex flex-col justify-between p-8 lg:p-10 xl:p-12 select-none">
+        {/* Background infrastructure image - fully visible edge-to-edge inside the padded rounded boundaries */}
+        <img
+          src={authSidebarImg}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
+        />
+        {/* Dark gradient overlay to guarantee white text readability in light and dark themes */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/25 z-10" />
 
-      {/* Top: Logo */}
-      <div className="relative z-10 flex items-center">
-        <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-          <Logo wordmarkSize="lg" />
-        </Link>
-      </div>
-
-      {/* Middle: content */}
-      <div className="relative z-10 my-auto py-10 space-y-6 max-w-xl">
-        {/* Role label — left border rule, no pill */}
-        <div className={`border-l-2 ${spec.borderColor} pl-3 font-mono text-[11px] tracking-[0.18em] uppercase font-semibold ${spec.textColor}`}>
-          {spec.badge}
+        {/* Top-Right: Logo placed in the top right corner of the image with custom padding */}
+        <div className="absolute top-6 right-6 z-20">
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+            <img
+              src={logoImg}
+              alt="CredChain"
+              className="w-24 h-24 lg:w-28 lg:h-28 object-contain animate-fade-in"
+              referrerPolicy="no-referrer"
+            />
+          </Link>
         </div>
 
-        <h2 className="font-display text-2xl lg:text-3xl xl:text-4xl font-bold text-txt-primary tracking-tight leading-snug">
-          {spec.heading}
-        </h2>
-
-        <ul className="space-y-3.5 pt-4">
-          {spec.perks.map((perk, idx) => (
-            <li key={idx} className="flex items-start gap-3 text-sm lg:text-base text-txt-secondary leading-relaxed font-sans">
-              <div className={`w-5 h-5 rounded-sm border border-border-main bg-bg-sunken flex items-center justify-center flex-shrink-0 mt-0.5 ${spec.textColor}`}>
-                <Check className="w-3 h-3" strokeWidth={2.5} />
-              </div>
-              <span>{perk}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Bottom: step indicator + back link */}
-      <div className="relative z-10 pt-6 space-y-4 border-t border-border-subtle">
-        {typeof currentStep === "number" && typeof totalSteps === "number" && totalSteps > 0 && (
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalSteps }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1 rounded-sm transition-all duration-200 ${
-                  currentStep === i + 1
-                    ? `w-8 ${spec.textColor.replace("text-", "bg-")}`
-                    : i + 1 < currentStep
-                    ? `w-4 ${spec.textColor.replace("text-", "bg-")}/50`
-                    : "w-2 bg-border-main"
-                }`}
-              />
-            ))}
-            <span className="ml-2 font-mono text-[11px] text-txt-muted">
-              {currentStep} / {totalSteps}
-            </span>
+        {/* Bottom: content overlaid in white text */}
+        <div className="relative z-20 mt-auto space-y-4 max-w-sm text-left">
+          {/* Role label — left border rule, no pill */}
+          <div className={`border-l-2 ${spec.borderColor} pl-3 font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-white/90`}>
+            {spec.badge}
           </div>
-        )}
 
-        <Link
-          to="/role"
-          className="text-xs font-mono text-txt-muted hover:text-txt-primary transition-colors inline-flex items-center gap-2 group pt-1"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Choose a different role</span>
-        </Link>
+          <h2 className="font-display text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+            {spec.heading}
+          </h2>
+
+          <p className="text-xs lg:text-sm text-white/75 leading-relaxed font-sans">
+            {role === "candidate"
+              ? "Your sovereign identity vault. Request credentials from institutions, generate AI-powered resumes, and share your tamper-proof profile with verified cryptographic proofs."
+              : role === "issuer"
+              ? "De-risk academic records. Issue, manage, and sign academic credentials cryptographically via the public ledger with complete revocation safety."
+              : "Audit instantly, hire with trust. Direct verification checks against institutional registries with cryptographic zero-fraud proof guarantees."}
+          </p>
+
+          {/* Step indicator + back link */}
+          <div className="pt-5 border-t border-white/15 space-y-4">
+            {typeof currentStep === "number" && typeof totalSteps === "number" && totalSteps > 0 && (
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalSteps }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-sm transition-all duration-200 ${
+                      currentStep === i + 1
+                        ? `w-8 bg-white`
+                        : i + 1 < currentStep
+                        ? `w-4 bg-white/50`
+                        : "w-2 bg-white/20"
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 font-mono text-[10px] text-white/60">
+                  {currentStep} / {totalSteps}
+                </span>
+              </div>
+            )}
+
+            <Link
+              to="/role"
+              className="text-[11px] font-mono text-white/60 hover:text-white transition-colors inline-flex items-center gap-2 group pt-1"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Choose a different role</span>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

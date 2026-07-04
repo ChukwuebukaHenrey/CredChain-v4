@@ -24,7 +24,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 h-16 border-b border-border-main flex items-center ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 h-20 border-b border-border-main flex items-center ${
         scrolled ? "bg-bg-base/90 backdrop-blur-[12px]" : "bg-bg-base"
       }`}
     >
@@ -80,7 +80,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-bg-base border-b border-border-main px-6 py-6 flex flex-col gap-6 md:hidden">
+        <div className="absolute top-20 left-0 right-0 bg-bg-base border-b border-border-main px-6 py-6 flex flex-col gap-6 md:hidden">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <a
