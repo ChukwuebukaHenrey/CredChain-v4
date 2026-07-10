@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Check, ArrowLeft } from "lucide-react";
-import logoImg from "../assets/logo.png";
-import authSidebarImg from "../assets/images/credchain_auth_sidebar_1782708558420.jpg";
+import Logo from "./Logo";
+import authSidebarImg from "../assets/images/auth_sidebar_1783426705561.jpg";
 
 export interface RoleInfo {
   id: "candidate" | "issuer" | "verifier";
@@ -80,12 +80,7 @@ export default function AuthLeftPanel({ role, currentStep, totalSteps }: AuthLef
         {/* Top-Right: Logo placed in the top right corner of the image with custom padding */}
         <div className="absolute top-6 right-6 z-20">
           <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-            <img
-              src={logoImg}
-              alt="CredChain"
-              className="w-24 h-24 lg:w-28 lg:h-28 object-contain animate-fade-in"
-              referrerPolicy="no-referrer"
-            />
+            <Logo showWordmark={true} wordmarkSize="md" />
           </Link>
         </div>
 
